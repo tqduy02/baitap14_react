@@ -1,50 +1,48 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
 import BookList from "./components/BookList";
 import BookCreate from "./components/BookCreate";
+import {
+  fetchBooks,
+  createBook,
+  deleteBookById,
+  editBookById
+} from "./Api";
 import './App.css';
 
 function App() {
   const [books, setBooks] = useState([]);
 
-  const fetchBooks = async () => {
-    const response = await axios.get("http://localhost:3001/books");
-    setBooks(response.data);
-  };
-
   useEffect(() => {
-    fetchBooks();
+    const loadBooks = async () => {
+      const books = await fetchBooks();
+      setBooks(books);
+    };
+    loadBooks();
   }, []);
 
-  const deleteBookById = async (id) => {
-    await axios.delete(`http://localhost:3001/books/${id}`);
+  const handleCreateBook = async (title) => {
+    const newBook = await createBook(title);
+    setBooks([...books, newBook]);
+  };
+
+  const handleDeleteBook = async (id) => {
+    await deleteBookById(id);
     setBooks(books.filter((book) => book.id !== id));
   };
 
-  const editBookById = async (id, newTitle) => {
-    const response = await axios.put(`http://localhost:3001/books/${id}`, {
-      title: newTitle,
-    });
-
+  const handleEditBook = async (id, newTitle) => {
+    const updatedBook = await editBookById(id, newTitle);
     const updatedBooks = books.map((book) =>
-      book.id === id ? { ...book, ...response.data } : book
+      book.id === id ? { ...book, ...updatedBook } : book
     );
     setBooks(updatedBooks);
-  };
-
-  const createBook = async (title) => {
-    const response = await axios.post("http://localhost:3001/books", {
-      title,
-    });
-
-    setBooks([...books, response.data]);
   };
 
   return (
     <div className="app">
       <h1>Reading List</h1>
-      <BookList books={books} onEdit={editBookById} onDelete={deleteBookById} />
-      <BookCreate onCreate={createBook} />
+      <BookList books={books} onEdit={handleEditBook} onDelete={handleDeleteBook} />
+      <BookCreate onCreate={handleCreateBook} />
     </div>
   );
 }
